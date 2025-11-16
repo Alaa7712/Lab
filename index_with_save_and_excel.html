@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>نموذج تقارير الأعطال - معامل 213 و 215</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --bg: #f7f7f8; --card:#fff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0; --primary:#0ea5e9; --danger:#ef4444; --success:#22c55e; --accent:#8b5cf6;
+    }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Naskh Arabic", Cairo, Tahoma, Arial, sans-serif; background: var(--bg); color: var(--text); margin:0; }
+    .container{max-width:1200px;margin:24px auto;padding:0 16px 48px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+    .title{font-size:20px;font-weight:800}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid var(--border);background:var(--card);padding:8px 12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer}
+    .btn:hover{box-shadow:0 4px 16px rgba(0,0,0,.06)}
+    .btn.primary{background:var(--primary);color:#fff;border-color:transparent}
+    .btn.success{background:var(--success);color:#fff;border-color:transparent}
+    .btn.danger{background:var(--danger);color:#fff;border-color:transparent}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.04)}
+    .tabs{display:flex;gap:8px;margin:8px 0 16px}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--border);cursor:pointer;background:#fff}
+    .tab.active{background:#0ea5e9;color:#fff;border-color:transparent}
+    .subtabs{display:flex;gap:6px;margin-top:6px}
+    .subtab{padding:6px 10px;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:#fff;font-size:13px}
+    .subtab.active{background:#f1f5f9}
+
+    .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+    select{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:#fff}
+
+    .table-wrap{overflow:auto;border-radius:12px;border:1px solid var(--border);background:#fff}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;background:#f1f5f9;font-weight:800;font-size:13px;border-bottom:2px solid var(--border)}
+    th,td{border-left:1px solid var(--border);border-bottom:1px solid var(--border);padding:10px;vertical-align:middle}
+    thead th:first-child,tbody th{background:#f8fafc;font-weight:800}
+    th:first-child,td:first-child{position:sticky;right:0;z-index:1}
+    th:first-child{z-index:3}
+    .cell{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .badge{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#64748b}
+    .badge.ok{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}
+    .badge.issue{color:#7f1d1d;background:#fef2f2;border-color:#fecaca}
+    .edit-btn{font-size:12px;border:1px dashed var(--border);background:#fff;padding:6px 8px;border-radius:10px;cursor:pointer}
+    .edit-btn:hover{border-color:#8b5cf6}
+
+    dialog::backdrop{background:rgb(15 23 42 / .55)}
+    dialog{border:0;border-radius:16px;padding:0;max-width:720px;width:96%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+    .modal header{padding:16px 20px;border-bottom:1px solid var(--border)}
+    .modal header .subtitle{color:#64748b;font-size:12px;font-weight:600}
+    .modal .content{padding:16px 20px;display:grid;gap:12px}
+    .field{display:grid;gap:6px}
+    label{font-size:13px;font-weight:700;color:#0f172a}
+    input[type="text"],textarea,select{border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:14px;background:#fff;outline:none;transition:.15s ease;font-family:inherit}
+    textarea{min-height:80px;resize:vertical}
+    input:focus,textarea:focus,select:focus{border-color:#0ea5e9;box-shadow:0 0 0 4px rgba(14,165,233,.15)}
+    .modal footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+
+    .floating-panel{position:sticky;top:12px;display:flex;gap:8px;align-items:center}
+    .chip{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px}
+
+    /* Masthead */
+    .masthead{background:#fff;border-bottom:1px solid var(--border);padding:18px 0 10px;margin:0 0 12px}
+    .masthead .brand{display:grid;place-items:center;text-align:center;gap:8px}
+    .masthead img{max-height:84px;max-width:220px;object-fit:contain}
+    .masthead .ar{font-weight:800;font-size:18px;color:#0f172a}
+    .masthead .ar-sub{font-size:14px;color:#334155}
+    .masthead .en{font-size:12px;color:#64748b}
+  </style>
+</head>
+<body>
+  <div class="masthead">
+    <div class="container brand">
+      
+      <div class="ar">جامعة شقراء</div>
+      <div class="ar-sub">الكلية التطبيقية – فرع القويعية – شطر الطالبات</div>
+      <div class="en">Shaqra University – Applied College – Al Quwaiiyah Branch – Female Section</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <div class="title">نموذج تقارير الأعطال — معامل 213 و 215</div>
+      <div class="toolbar">
+        <button id="saveAll" class="btn success">💾 حفظ البيانات</button>
+        <button id="exportXlsx" class="btn primary">تصدير Excel</button>
+        <button id="exportCsv" class="btn">تصدير CSV</button>
+        <button id="printPage" class="btn">طباعة</button>
+        <button id="clearAll" class="btn danger">مسح الكل</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-lab="213">معمل 213</button>
+        <button class="tab" data-lab="215">معمل 215</button>
+      </div>
+      <div class="subtabs">
+        <button class="subtab active" data-view="report">التقرير</button>
+        <button class="subtab" data-view="performance">نسبة الأداء</button>
+      </div>
+
+      <div class="filters">
+        <label>الأسبوع:</label>
+        <select id="weekSelect"></select>
+        <div class="floating-panel">
+          <span class="chip">
+            <span>نوع العطل:</span>
+            <select id="globalFault"></select>
+          </span>
+          <span class="chip">تلميح: اختر نوع العطل هنا ثم حرر أي جهاز لتعبئته سريعًا.</span>
+        </div>
+      </div>
+
+      <div class="table-wrap" id="reportWrap">
+        <table id="reportTable">
+          <thead><tr><th>اليوم \ الجهاز</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" id="perfWrap" style="display:none">
+        <table id="perfTable">
+          <thead>
+            <tr><th>رقم الجهاز</th><th>اسم الجهاز</th><th>نسبة الأداء %</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="cellDialog">
+    <div class="modal">
+      <header>
+        <div>
+          <div class="title">تعبئة خلية التقرير</div>
+          <div class="subtitle" id="modalMeta"></div>
+        </div>
+      </header>
+      <form method="dialog" id="cellForm">
+        <div class="content">
+          <div class="field">
+            <label for="hasIssue">هل يوجد عطل؟</label>
+            <select id="hasIssue" required>
+              <option value="">— اختر —</option>
+              <option value="لا">لا</option>
+              <option value="نعم">نعم</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="faultType">نوع العطل</label>
+            <select id="faultType"></select>
+            <div class="hint">يتم تعبئة هذا الحقل تلقائيًا من اختيارك في الشريط العائم، ويمكن تغييره هنا.</div>
+          </div>
+
+          <div class="field">
+            <label for="action">الإجراء المطلوب</label>
+            <input id="action" type="text" placeholder="يُعبأ تلقائيًا حسب نوع العطل" />
+          </div>
+
+          <div class="field">
+            <label for="notes">ملاحظات</label>
+            <textarea id="notes" placeholder="أي تفاصيل إضافية…"></textarea>
+          </div>
+        </div>
+        <footer>
+          <button class="btn" value="cancel">إلغاء</button>
+          <button class="btn success" id="saveBtn" value="default">حفظ</button>
+        </footer>
+      </form>
+    </div>
+  </dialog>
+
+  <script>
+    const labs = [213, 215];
+    const deviceCount = 17;
+    const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس"];
+    const faultsMap = {
+      "عطل في الشاشة": "فحص كابل الشاشة (VGA / HDMI)، اختبار الشاشة على جهاز آخر، استبدال الكابل أو الشاشة إذا لزم.",
+      "عطل في لوحة المفاتيح": "تنظيف الأزرار بالمحلول المخصص، تجربة كيبورد آخر للتأكد، استبدال لوحة المفاتيح عند الضرورة.",
+      "عطل في الفأرة": "فحص منفذ USB، تجربة ماوس آخر، تنظيف حساس الماوس أو تغييره.",
+      "عدم إقلاع النظام": "فحص توصيلات الطاقة والقرص الصلب، الدخول إلى BIOS للتحقق من الإعدادات، إعادة تثبيت النظام إذا لزم.",
+      "بطء في الأداء": "حذف الملفات المؤقتة، تعطيل البرامج غير الضرورية عند بدء التشغيل، فحص الجهاز من الفيروسات.",
+      "عطل في القرص الصلب": "استخدام أدوات فحص الأقراص (CHKDSK)، نسخ البيانات المهمة احتياطيًا، استبدال القرص عند وجود قطاعات تالفة.",
+      "ارتفاع درجة الحرارة": "تنظيف المروحة والمعجون الحراري، التأكد من تهوية الجهاز، استبدال المروحة إذا توقفت.",
+      "عطل في الصوت": "فحص تعريف الصوت، التأكد من توصيل السماعات، تجربة سماعات بديلة، تحديث التعريفات.",
+      "مشاكل في USB": "تنظيف المنفذ، تحديث تعريفات USB، فحص إعدادات BIOS الخاصة بالمنافذ، استخدام منفذ آخر.",
+      "انقطاع الطاقة المفاجئ": "فحص كابل الكهرباء، تجربة مصدر طاقة آخر، استبدال مزود الطاقة (Power Supply).",
+      "أخطاء في النظام": "تشغيل أداة إصلاح النظام، تحديث النظام، فحص ملفات النظام باستخدام SFC /scannow.",
+      "توقف البرامج عن العمل": "إعادة تثبيت البرنامج، تحديثه إلى آخر إصدار، فحص التعارض مع برامج أخرى.",
+      "فيروسات أو برامج خبيثة": "إجراء فحص شامل بمضاد فيروسات موثوق، حذف الملفات المصابة، تثبيت حماية محدثة.",
+      "مشاكل في تعريفات الأجهزة": "استخدام Windows Update أو موقع الشركة المصنعة لتحديث التعريفات، إعادة التثبيت.",
+      "فقدان البيانات أو الملفات": "استخدام أدوات استرجاع البيانات، فحص القرص، إنشاء نسخ احتياطية دورية مستقبلًا.",
+      "انقطاع الاتصال بالشبكة": "فحص كابل الشبكة أو إعدادات الواي فاي، إعادة تشغيل المودم، التأكد من إعدادات IP.",
+      "بطء الاتصال بالإنترنت": "اختبار السرعة، فصل الأجهزة غير الضرورية، تغيير القناة اللاسلكية.",
+      "عدم التعرف على الشبكة": "حذف الشبكة وإعادة الاتصال، تحديث تعريف كرت الشبكة، ضبط إعدادات DHCP.",
+      "عدم الاتصال بالطابعة الشبكية": "التأكد من عنوان الـ IP، إعادة تعريف الطابعة، فحص الكابل."
+    };
+    const faultTypes = Object.keys(faultsMap);
+
+    const STORAGE_KEY = "labReportStore.v2";
+    let currentLab = 213;
+    let currentView = 'report';
+    let currentWeek = 1;
+
+    function createEmptyStore(){
+      const st = {};
+      for (const lab of labs) {
+        st[lab] = { report:{}, performance:{} };
+        for (let w=1; w<=30; w++) {
+          st[lab].report[w] = {};
+          st[lab].performance[w] = {};
+        }
+      }
+      return st;
+    }
+
+    let store = loadFromStorage() || createEmptyStore();
+
+    function saveToStorage(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+      alert('تم حفظ البيانات في المتصفح بنجاح ✅');
+    }
+    function loadFromStorage(){
+      try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; }
+      catch(e){ return null; }
+    }
+
+    const weekSelect = document.getElementById('weekSelect');
+    for (let i=1;i<=30;i++){ const opt=document.createElement('option'); opt.value=i; opt.textContent=`الأسبوع ${i}`; weekSelect.appendChild(opt); }
+    weekSelect.addEventListener('change',()=>{ currentWeek=parseInt(weekSelect.value); rebuild(); saveToStorage(); });
+
+    const globalFault = document.getElementById('globalFault');
+    faultTypes.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; globalFault.appendChild(o);} );
+
+    const reportTable = document.getElementById('reportTable');
+    const theadRow = reportTable.tHead.rows[0];
+    const tbody = reportTable.tBodies[0];
+
+    function buildReportHead(){
+      while (theadRow.cells.length>1) theadRow.deleteCell(1);
+      for (let i = 1; i <= deviceCount; i++) {
+        const th = document.createElement('th');
+        th.textContent = i===17 ? 'جهاز الأستاذ' : i.toString();
+        theadRow.appendChild(th);
+      }
+    }
+
+    function buildReportBody(){
+      tbody.innerHTML='';
+      dayNames.forEach((day, dIdx)=>{
+        const tr=document.createElement('tr');
+        const th=document.createElement('th'); th.textContent=day; tr.appendChild(th);
+        for(let dev=1;dev<=deviceCount;dev++){
+          const td=document.createElement('td'); td.dataset.key=`${dIdx}-${dev}`;
+          const cell=document.createElement('div'); cell.className='cell';
+          const badge=document.createElement('span'); badge.className='badge'; badge.textContent='غير مدخل';
+          const edit=document.createElement('button'); edit.type='button'; edit.className='edit-btn'; edit.textContent='تحرير';
+          edit.addEventListener('click',()=>openModal(dIdx,dev));
+          cell.appendChild(badge); cell.appendChild(edit); td.appendChild(cell); tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+      refreshAllBadges();
+    }
+
+    const perfTable = document.getElementById('perfTable');
+    const perfBody = perfTable.tBodies[0];
+    function buildPerfBody(){
+      perfBody.innerHTML='';
+      for(let dev=1;dev<=deviceCount;dev++){
+        const tr=document.createElement('tr');
+        const tdNum=document.createElement('td'); tdNum.textContent=dev;
+        const tdName=document.createElement('td'); tdName.textContent= dev===17 ? 'جهاز الأستاذ' : dev;
+        const tdPerc=document.createElement('td');
+        const input=document.createElement('input'); input.type='number'; input.min='0'; input.max='100'; input.placeholder='%';
+        input.value = store[currentLab].performance[currentWeek][dev] ?? '';
+        input.addEventListener('input',()=>{ store[currentLab].performance[currentWeek][dev]=input.value; });
+        input.addEventListener('change',()=>{ saveToStorage(); });
+        tdPerc.appendChild(input);
+        tr.appendChild(tdNum); tr.appendChild(tdName); tr.appendChild(tdPerc); perfBody.appendChild(tr);
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(btn=>{
+      btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); currentLab=parseInt(btn.dataset.lab); rebuild(); });
+    });
+
+    document.querySelectorAll('.subtab').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.subtab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); currentView=btn.dataset.view; toggleViews(); });
+    });
+
+    function toggleViews(){
+      if(currentView==='report'){ document.getElementById('reportWrap').style.display='block'; document.getElementById('perfWrap').style.display='none'; }
+      else { document.getElementById('reportWrap').style.display='none'; document.getElementById('perfWrap').style.display='block'; buildPerfBody(); }
+    }
+
+    function rebuild(){
+      buildReportHead();
+      buildReportBody();
+      toggleViews();
+    }
+
+    const dialog = document.getElementById('cellDialog');
+    const hasIssueEl = document.getElementById('hasIssue');
+    const faultSelect = document.getElementById('faultType');
+    const actionEl = document.getElementById('action');
+    const notesEl = document.getElementById('notes');
+    const modalMeta = document.getElementById('modalMeta');
+
+    function fillFaultSelect(){ faultSelect.innerHTML=''; faultTypes.forEach(f=>{ const o=document.createElement('option'); o.value=f; o.textContent=f; faultSelect.appendChild(o);}); }
+    fillFaultSelect();
+
+    function setDisabledFields(disabled){ faultSelect.disabled=disabled; actionEl.disabled=disabled; notesEl.disabled=disabled; }
+    hasIssueEl.addEventListener('change',()=> setDisabledFields(hasIssueEl.value==='لا'));
+
+    function openModal(dayIndex, device){
+      const key=`${dayIndex}-${device}`;
+      const rec=store[currentLab].report[currentWeek][key] || {hasIssue:'',faultType:'',action:'',notes:''};
+      hasIssueEl.value = rec.hasIssue;
+      fillFaultSelect();
+      if(!rec.faultType && document.getElementById('globalFault').value){ rec.faultType = document.getElementById('globalFault').value; }
+      faultSelect.value = rec.faultType;
+      actionEl.value = rec.action || faultsMap[faultSelect.value] || '';
+      notesEl.value = rec.notes;
+      setDisabledFields(hasIssueEl.value==='لا');
+      modalMeta.textContent = `${dayNames[dayIndex]} – ${device===17?'جهاز الأستاذ':('جهاز '+device)}`;
+      dialog.dataset.key = key;
+      dialog.showModal();
+    }
+
+    faultSelect.addEventListener('change',()=>{ actionEl.value = faultsMap[faultSelect.value] || ''; });
+
+    document.getElementById('cellForm').addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const key=dialog.dataset.key;
+      store[currentLab].report[currentWeek][key] = {
+        hasIssue: hasIssueEl.value,
+        faultType: hasIssueEl.value==='لا' ? '' : faultSelect.value,
+        action: hasIssueEl.value==='لا' ? '' : actionEl.value,
+        notes: hasIssueEl.value==='لا' ? '' : notesEl.value,
+      };
+      updateBadge(key);
+      dialog.close();
+      saveToStorage();
+    });
+
+    function updateBadge(key){
+      const td = document.getElementById('reportTable').tBodies[0].querySelector(`[data-key="${key}"]`);
+      if(!td) return; const badge = td.querySelector('.badge');
+      const rec = store[currentLab].report[currentWeek][key];
+      if(!rec || !rec.hasIssue){ badge.textContent='غير مدخل'; badge.className='badge'; }
+      else if(rec.hasIssue==='لا'){ badge.textContent='لا يوجد عطل'; badge.className='badge ok'; }
+      else { badge.textContent='يوجد عطل'; badge.className='badge issue'; }
+    }
+
+    function refreshAllBadges(){
+      for(let dIdx=0; dIdx<dayNames.length; dIdx++){ for(let dev=1; dev<=deviceCount; dev++){ updateBadge(`${dIdx}-${dev}`); } }
+    }
+
+    function exportCSV(){
+      const rows = [["المعمل","الأسبوع","اليوم","رقم الجهاز","اسم الجهاز","هل يوجد عطل؟","نوع العطل","الإجراء المطلوب","ملاحظات","نسبة الأداء %"]];
+      for(const lab of labs){
+        for(let w=1; w<=30; w++){
+          for(let dIdx=0; dIdx<dayNames.length; dIdx++){
+            for(let dev=1; dev<=deviceCount; dev++){
+              const key=`${dIdx}-${dev}`;
+              const r = store[lab].report[w][key] || {};
+              const perf = store[lab].performance[w][dev] || '';
+              rows.push([lab, w, dayNames[dIdx], dev, (dev===17?'جهاز الأستاذ':dev), r.hasIssue||'', r.faultType||'', r.action||'', r.notes||'', perf]);
+            }
+          }
+        }
+      }
+      const csv = rows.map(r=>r.map(field=>{ const s=String(field??''); return (s.includes(',')||s.includes('"')||s.includes('\n'))? '"'+s.replace(/"/g,'""')+'"': s; }).join(',')).join('\n');
+      const blob = new Blob(["\ufeff"+csv], {type:'text/csv;charset=utf-8'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='تقارير_المعمل_213_و_215_لـ30_أسبوع.csv'; a.click(); URL.revokeObjectURL(a.href);
+    }
+
+    function exportXLSX(){
+      const wb = XLSX.utils.book_new();
+      const header = ["المعمل","الأسبوع","اليوم","رقم الجهاز","اسم الجهاز","هل يوجد عطل؟","نوع العطل","الإجراء المطلوب","ملاحظات","نسبة الأداء %"];
+      const rows = [header];
+      for(const lab of labs){
+        for(let w=1; w<=30; w++){
+          for(let dIdx=0; dIdx<dayNames.length; dIdx++){
+            for(let dev=1; dev<=deviceCount; dev++){
+              const key=`${dIdx}-${dev}`;
+              const r = store[lab].report[w][key] || {};
+              const perf = store[lab].performance[w][dev] || '';
+              rows.push([lab, w, dayNames[dIdx], dev, (dev===17?'جهاز الأستاذ':dev), r.hasIssue||'', r.faultType||'', r.action||'', r.notes||'', perf]);
+            }
+          }
+        }
+      }
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, "تقارير المعمل");
+      XLSX.writeFile(wb, "تقارير_المعمل_213_و_215_لـ30_أسبوع.xlsx");
+    }
+
+    document.getElementById('exportCsv').addEventListener('click', exportCSV);
+    document.getElementById('exportXlsx').addEventListener('click', exportXLSX);
+    document.getElementById('printPage').addEventListener('click',()=>window.print());
+    document.getElementById('saveAll').addEventListener('click', saveToStorage);
+    document.getElementById('clearAll').addEventListener('click',()=>{
+      if(!confirm('هل أنت متأكد من مسح كل البيانات؟')) return;
+      store = createEmptyStore();
+      saveToStorage();
+      rebuild();
+    });
+
+    window.addEventListener('DOMContentLoaded',()=>{
+      weekSelect.value = String(currentWeek);
+      rebuild();
+    });
+  </script>
+</body>
+</html>
